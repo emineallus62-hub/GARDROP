@@ -37,13 +37,56 @@ jobs:
 
           if [ -z "$SETTINGS" ]; then
             echo "settings.gradle bulunamadi."
-            find android-project -maxdepth 4 -type f | head -100
+            find android-project -maxdepth 5 -type f | head -100
             exit 1
           fi
 
           PROJECT_DIR=$(dirname "$SETTINGS")
 
           echo "Android proje klasoru: $PROJECT_DIR"
+
+          APP_GRADLE="$PROJECT_DIR/app/build.gradle"
+          MAIN_JAVA="$PROJECT_DIR/app/src/main/java/com/beren/rcwardrobe/MainActivity.java"
+
+          echo "Teknik uyumluluk duzeltmeleri uygulanıyor..."
+
+          python3 - <<PY
+          from pathlib import Path
+
+          gradle = Path("$APP_GRADLE")
+          text = gradle.read_text()
+
+          if "buildFeatures" not in text:
+              text = text.replace(
+                  "android {\n",
+                  "android {\n    buildFeatures {\n        aidl = true\n    }\n",
+                  1
+              )
+
+          if "androidx.annotation:annotation" not in text:
+              text = text.replace(
+                  "dependencies {\n",
+                  "dependencies {\n    implementation 'androidx.annotation:annotation:1.8.2'\n",
+                  1
+              )
+
+          gradle.write_text(text)
+
+          main = Path("$MAIN_JAVA")
+          text = main.read_text()
+
+          text = text.replace(
+              "Shizuku.UserServiceConnection",
+              "android.content.ServiceConnection"
+          )
+
+          main.write_text(text)
+          PY
+
+          echo "AIDL etkinlestirildi."
+          echo "Shizuku ServiceConnection duzeltildi."
+          echo "AndroidX annotation eklendi."
+
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
       - name: Set up JDK 17
