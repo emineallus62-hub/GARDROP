@@ -47,6 +47,7 @@ jobs:
 
           APP_GRADLE="$PROJECT_DIR/app/build.gradle"
           MAIN_JAVA="$PROJECT_DIR/app/src/main/java/com/beren/rcwardrobe/MainActivity.java"
+          AIDL_FILE="$PROJECT_DIR/app/src/main/aidl/com/beren/rcwardrobe/IFileScanService.aidl"
 
           echo "Teknik uyumluluk duzeltmeleri uygulanıyor..."
 
@@ -81,9 +82,20 @@ jobs:
           )
 
           main.write_text(text)
+
+          aidl = Path("$AIDL_FILE")
+          text = aidl.read_text()
+
+          text = text.replace(
+              "String scan(String root);",
+              "String scan(String root) = 1;"
+          )
+
+          aidl.write_text(text)
           PY
 
           echo "AIDL etkinlestirildi."
+          echo "AIDL transaction ID duzeltildi."
           echo "Shizuku ServiceConnection duzeltildi."
           echo "AndroidX annotation eklendi."
 
